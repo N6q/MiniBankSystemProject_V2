@@ -1,0 +1,7 @@
+==== MiniBank Receipt ====
+Account Number: 1001
+Username: ww
+Operation: Withdraw
+Amount: 2.00
+Balance: 242.00
+Date: 7/2/2025 8:57:16 AM

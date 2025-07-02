@@ -1,0 +1,7 @@
+==== MiniBank Receipt ====
+Account Number: 1002
+Username: ee
+Operation: Deposit
+Amount: 33.00
+Balance: 477.00
+Date: 7/2/2025 9:09:30 AM

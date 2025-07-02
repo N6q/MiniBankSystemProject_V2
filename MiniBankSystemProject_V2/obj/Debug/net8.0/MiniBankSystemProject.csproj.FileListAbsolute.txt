@@ -1,0 +1,15 @@
+C:\Users\CodeLine\Desktop\Course meterials\1-7-2025 Day 80 (Mini bank Project)\MiniBankSystemProject\bin\Debug\net8.0\MiniBankSystemProject.exe
+C:\Users\CodeLine\Desktop\Course meterials\1-7-2025 Day 80 (Mini bank Project)\MiniBankSystemProject\bin\Debug\net8.0\MiniBankSystemProject.deps.json
+C:\Users\CodeLine\Desktop\Course meterials\1-7-2025 Day 80 (Mini bank Project)\MiniBankSystemProject\bin\Debug\net8.0\MiniBankSystemProject.runtimeconfig.json
+C:\Users\CodeLine\Desktop\Course meterials\1-7-2025 Day 80 (Mini bank Project)\MiniBankSystemProject\bin\Debug\net8.0\MiniBankSystemProject.dll
+C:\Users\CodeLine\Desktop\Course meterials\1-7-2025 Day 80 (Mini bank Project)\MiniBankSystemProject\bin\Debug\net8.0\MiniBankSystemProject.pdb
+C:\Users\CodeLine\Desktop\Course meterials\1-7-2025 Day 80 (Mini bank Project)\MiniBankSystemProject\obj\Debug\net8.0\MiniBankSystemProject.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\CodeLine\Desktop\Course meterials\1-7-2025 Day 80 (Mini bank Project)\MiniBankSystemProject\obj\Debug\net8.0\MiniBankSystemProject.AssemblyInfoInputs.cache
+C:\Users\CodeLine\Desktop\Course meterials\1-7-2025 Day 80 (Mini bank Project)\MiniBankSystemProject\obj\Debug\net8.0\MiniBankSystemProject.AssemblyInfo.cs
+C:\Users\CodeLine\Desktop\Course meterials\1-7-2025 Day 80 (Mini bank Project)\MiniBankSystemProject\obj\Debug\net8.0\MiniBankSystemProject.csproj.CoreCompileInputs.cache
+C:\Users\CodeLine\Desktop\Course meterials\1-7-2025 Day 80 (Mini bank Project)\MiniBankSystemProject\obj\Debug\net8.0\MiniBankSystemProject.sourcelink.json
+C:\Users\CodeLine\Desktop\Course meterials\1-7-2025 Day 80 (Mini bank Project)\MiniBankSystemProject\obj\Debug\net8.0\MiniBankSystemProject.dll
+C:\Users\CodeLine\Desktop\Course meterials\1-7-2025 Day 80 (Mini bank Project)\MiniBankSystemProject\obj\Debug\net8.0\refint\MiniBankSystemProject.dll
+C:\Users\CodeLine\Desktop\Course meterials\1-7-2025 Day 80 (Mini bank Project)\MiniBankSystemProject\obj\Debug\net8.0\MiniBankSystemProject.pdb
+C:\Users\CodeLine\Desktop\Course meterials\1-7-2025 Day 80 (Mini bank Project)\MiniBankSystemProject\obj\Debug\net8.0\MiniBankSystemProject.genruntimeconfig.cache
+C:\Users\CodeLine\Desktop\Course meterials\1-7-2025 Day 80 (Mini bank Project)\MiniBankSystemProject\obj\Debug\net8.0\ref\MiniBankSystemProject.dll

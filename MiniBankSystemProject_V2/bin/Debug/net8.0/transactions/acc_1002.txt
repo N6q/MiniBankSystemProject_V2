@@ -1,0 +1,2 @@
+7/2/2025 9:09:30 AM | Deposit | Amount: 33 | Balance: 477
+7/2/2025 9:09:37 AM | Withdraw | Amount: 2 | Balance: 475
