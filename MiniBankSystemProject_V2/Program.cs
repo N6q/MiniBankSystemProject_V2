@@ -17,14 +17,14 @@ namespace MiniBankSystemProject
         /// User object for login, signup, and linking accounts to logins.
         /// Each User has a username (login name), password, and role ("Admin" or "Customer").
         /// </summary>
-        public class User
-        {
-            public string Username = "";   // The unique login name for user
-            public string Password = "";   // The login password for user
-            public string Role = "";       // "Admin" or "Customer"
-            public bool IsLocked = false;
-            public int FailedAttempts = 0;
-        }
+        //public class User
+        //{
+        //    public string Username = "";   // The unique login name for user
+        //    public string Password = "";   // The login password for user
+        //    public string Role = "";       // "Admin" or "Customer"
+        //    public bool IsLocked = false;
+        //    public int FailedAttempts = 0;
+        //}
 
         /// <summary>
         /// Reads a password from the user and displays asterisks (*) for each character.
@@ -47,6 +47,7 @@ namespace MiniBankSystemProject
             Console.WriteLine();
             return pass;
         }
+        
 
         /// <summary>
         /// Hashes a password string using SHA256 for secure storage.
@@ -68,14 +69,14 @@ namespace MiniBankSystemProject
         /// Stores the username of the requester, requested loan amount, reason for the loan,
         /// and whether the request has been processed by the admin.
         /// </summary>
-        public class LoanRequest
-        {
-            public string Username;
-            public double Amount;
-            public string Reason;
-            public string Status;
-            public double InterestRate;
-        }
+        //public class LoanRequest
+        //{
+        //    public string Username;
+        //    public double Amount;
+        //    public string Reason;
+        //    public string Status;
+        //    public double InterestRate;
+        //}
 
         /// <summary>
         /// Prompts for National ID (digits only) and validates input.
@@ -118,8 +119,14 @@ namespace MiniBankSystemProject
         //   Global Data Collections 
         // =============================
 
-        // Stores all registered users (login info)
-        public static List<User> Users = new List<User>();
+
+
+        public static List<string> Usernames = new List<string>(); 
+        public static List<string> Passwords = new List<string>();
+        public static List<string> Roles = new List<string>();      // "Admin" or "Customer"
+        public static List<bool> IsLocked = new List<bool>();
+        public static List<int> FailedAttempts = new List<int>();
+
         // Stores all pending account creation requests (as queue, so admin approves in order)
         public static Queue<string> accountOpeningRequests = new Queue<string>();
         // Stores all approved account numbers (unique int per account)
@@ -138,15 +145,22 @@ namespace MiniBankSystemProject
         public static Stack<string> ReviewsS = new Stack<string>();
         // Last issued account number (for generating new unique numbers)
         static int lastAccountNumber = 1000;
-        // Stores all pending loan requests (queue for processing in order)
-        public static Queue<LoanRequest> LoanRequests = new Queue<LoanRequest>();
-        // Stores all ServiceFeedbacks
-        public static List<string> ServiceFeedbacks = new List<string>();
-        // Stores all appointment requests (as a queue, for admin to process)
-        public static Queue<string> AppointmentRequests = new Queue<string>();
-        // Stores all approved appointments (for customers to view)
-        public static List<string> ApprovedAppointments = new List<string>();
 
+
+        
+        
+        public static List<string> LoanReq_Usernames = new List<string>();
+        public static List<double> LoanReq_Amounts = new List<double>();
+        public static List<string> LoanReq_Reasons = new List<string>();
+        public static List<string> LoanReq_Status = new List<string>();
+        public static List<double> LoanReq_InterestRates = new List<double>();
+
+        // Stores all ServiceFeedbacks 
+        public static List<string> ServiceFeedbacks = new List<string>();
+
+        // Appointment requests and approvals 
+        public static Queue<string> AppointmentRequests = new Queue<string>();
+        public static List<string> ApprovedAppointments = new List<string>();
 
 
 
@@ -224,7 +238,7 @@ namespace MiniBankSystemProject
         static void PauseBox()
         {
             Console.WriteLine("╔════════════════════════════════════════════════════════╗");
-            Console.WriteLine("║ Press Enter to continue...                            ║");
+            Console.WriteLine("║ Press Enter to continue...                             ║");
             Console.WriteLine("╚════════════════════════════════════════════════════════╝");
             Console.ReadLine();
         }
@@ -281,37 +295,43 @@ namespace MiniBankSystemProject
         }
 
         /// <summary>
-        /// Saves all registered user (login) data to disk.
+        /// Saves all registered user (login) data to disk 
         /// </summary>
         static void SaveUsers()
         {
-            StreamWriter writer = new StreamWriter(UsersFilePath);
-            for (int i = 0; i < Users.Count; i++)
-                writer.WriteLine(Users[i].Username + "," + Users[i].Password + "," + Users[i].Role);
-            writer.Close();
+            using (StreamWriter writer = new StreamWriter(UsersFilePath))
+            {
+                for (int i = 0; i < Usernames.Count; i++)
+                    writer.WriteLine(Usernames[i] + "," + Passwords[i] + "," + Roles[i]);
+            }
         }
 
         /// <summary>
-        /// Loads all registered user (login) data from disk.
+        /// Loads all registered user (login) data from disk 
         /// </summary>
         static void LoadUsers()
         {
-            Users.Clear();
+            Usernames.Clear();
+            Passwords.Clear();
+            Roles.Clear();
+            IsLocked.Clear();
+            FailedAttempts.Clear();
             if (!File.Exists(UsersFilePath)) return;
             string[] lines = File.ReadAllLines(UsersFilePath);
-            for (int i = 0; i < lines.Length; i++)
+            foreach (string line in lines)
             {
-                string[] parts = lines[i].Split(',');
+                string[] parts = line.Split(',');
                 if (parts.Length == 3)
                 {
-                    User user = new User();
-                    user.Username = parts[0];
-                    user.Password = parts[1];
-                    user.Role = parts[2];
-                    Users.Add(user);
+                    Usernames.Add(parts[0]);
+                    Passwords.Add(parts[1]);
+                    Roles.Add(parts[2]);
+                    IsLocked.Add(false);      // Default values for properties not stored in file
+                    FailedAttempts.Add(0);
                 }
             }
         }
+
 
         /// <summary>
         /// Saves all complaints/reviews (stack) to disk.
@@ -393,38 +413,40 @@ namespace MiniBankSystemProject
         {
             using (StreamWriter sw = new StreamWriter(LoanRequestsFilePath))
             {
-                foreach (var req in LoanRequests)
+                for (int i = 0; i < LoanReq_Usernames.Count; i++)
                 {
-                    // Save interest rate too
-                    sw.WriteLine($"{req.Username}|{req.Amount}|{req.Reason}|{req.Status}|{req.InterestRate}");
+                    sw.WriteLine($"{LoanReq_Usernames[i]}|{LoanReq_Amounts[i]}|{LoanReq_Reasons[i]}|{LoanReq_Status[i]}|{LoanReq_InterestRates[i]}");
                 }
             }
         }
 
         /// <summary>
-        /// Loads all loan requests from the persistent storage file ("loan_requests.txt") into the LoanRequests queue.
+        /// Loads all loan requests from the persistent storage file ("loan_requests.txt") into the parallel lists.
         /// This should be called at program startup to restore the loan request history for the session.
         /// </summary>
         public static void LoadLoanRequests()
         {
-            LoanRequests.Clear();
+            LoanReq_Usernames.Clear();
+            LoanReq_Amounts.Clear();
+            LoanReq_Reasons.Clear();
+            LoanReq_Status.Clear();
+            LoanReq_InterestRates.Clear();
+
             if (!File.Exists(LoanRequestsFilePath)) return;
             foreach (var line in File.ReadAllLines(LoanRequestsFilePath))
             {
                 var parts = line.Split('|');
                 if (parts.Length >= 5)
                 {
-                    LoanRequests.Enqueue(new LoanRequest
-                    {
-                        Username = parts[0],
-                        Amount = double.Parse(parts[1]),
-                        Reason = parts[2],
-                        Status = parts[3],
-                        InterestRate = double.Parse(parts[4])
-                    });
+                    LoanReq_Usernames.Add(parts[0]);
+                    LoanReq_Amounts.Add(double.Parse(parts[1]));
+                    LoanReq_Reasons.Add(parts[2]);
+                    LoanReq_Status.Add(parts[3]);
+                    LoanReq_InterestRates.Add(double.Parse(parts[4]));
                 }
             }
         }
+
 
         /// <summary>
         /// Saves all service feedbacks to a text file ("service_feedback.txt") for persistence.
@@ -526,28 +548,29 @@ namespace MiniBankSystemProject
                 if (req.Contains("National ID: " + nationalID)) return true;
             return false;
         }
-        
+
         /// <summary>
         /// Returns the index of the logged-in user's account (by username), or -1 if none.
         /// </summary>
-        public static int GetAccountIndexForUser(User currentUser)
+        public static int GetAccountIndexForUser(string username)
         {
             for (int i = 0; i < accountNamesL.Count; i++)
-                if (accountNamesL[i].ToLower() == currentUser.Username.ToLower())
+                if (accountNamesL[i].ToLower() == username.ToLower())
                     return i;
             return -1;
         }
-        
+
         /// <summary>
         /// Returns the pending request for this user, or null if none.
         /// </summary>
-        public static string GetPendingRequestForUser(User currentUser)
+        public static string GetPendingRequestForUser(string username)
         {
             foreach (string req in accountOpeningRequests)
-                if (req.Contains("Username: " + currentUser.Username))
+                if (req.Contains("Username: " + username))
                     return req;
             return null;
         }
+
 
         /// <summary>
         /// Reads user input with a timeout (auto-logout if time expires).
@@ -628,9 +651,10 @@ namespace MiniBankSystemProject
                 else if (input == "2") ShowRoleAuthMenu("Customer");
                 else if (input == "3")
                 {
-                    // Allows login by National ID only
-                    User u = LoginByNationalID();
-                    if (u != null) ShowCustomerMenu(u);
+                    // Login by National ID only (returns user index, or -1)
+                    var (userIdx, username) = LoginByNationalID();
+                    if (userIdx != -1) ShowCustomerMenu(userIdx, username);
+
                 }
                 else if (input == "4") ShowBankAbout();
                 else if (input == "5") ToggleTheme();
@@ -638,6 +662,7 @@ namespace MiniBankSystemProject
                 else { Console.WriteLine("Invalid choice! Try again."); PauseBox(); }
             }
         }
+
 
         /// <summary>
         /// Shows login/signup for Admin or Customer role.
@@ -657,11 +682,11 @@ namespace MiniBankSystemProject
                 string input = Console.ReadLine();
                 if (input == "1")
                 {
-                    User user = LoginSpecificRole(role);
-                    if (user != null)
+                    var (userIdx, username) = LoginSpecificRole(role);
+                    if (userIdx != -1)
                     {
-                        if (role == "Admin") ShowAdminMenu(user);
-                        else ShowCustomerMenu(user);
+                        if (role == "Admin") ShowAdminMenu(userIdx);
+                        else ShowCustomerMenu(userIdx, username);
                     }
                 }
                 else if (input == "2") SignupSpecificRole(role);
@@ -669,6 +694,7 @@ namespace MiniBankSystemProject
                 else { Console.WriteLine("Invalid choice! Try again."); PauseBox(); }
             }
         }
+
 
         /// <summary>
         /// Helper to return to the main welcome menu.
@@ -735,7 +761,7 @@ namespace MiniBankSystemProject
         /// <summary>
         /// Standard login by username and password for specified role, with hashed password, lockout after 3 failed tries.
         /// </summary>
-        public static User LoginSpecificRole(string role)
+        public static (int userIdx, string username) LoginSpecificRole(string role)
         {
             Console.Clear();
             PrintBoxHeader("LOGIN " + role.ToUpper(), role == "Admin" ? "🛡️" : "👤");
@@ -743,60 +769,62 @@ namespace MiniBankSystemProject
             Console.Write("| Username: ");
             string username = Console.ReadLine();
 
-            // Find user object
-            User foundUser = null;
-            for (int i = 0; i < Users.Count; i++)
-                if (Users[i].Username == username && Users[i].Role == role)
-                    foundUser = Users[i];
+            // Find user index
+            int foundIdx = -1;
+            for (int i = 0; i < Usernames.Count; i++)
+                if (Usernames[i] == username && Roles[i] == role)
+                    foundIdx = i;
 
-            if (foundUser == null)
+            if (foundIdx == -1)
             {
                 PrintMessageBox("No such user with this role.", ConsoleColor.Red);
-                 return null;
+                return (-1, username);  // Fixed: always return a tuple!
             }
 
-            if (foundUser.IsLocked)
+            if (IsLocked[foundIdx])
             {
                 PrintMessageBox("\nAccount is locked. Please contact admin to unlock.", ConsoleColor.Red);
-                PrintBoxFooter(); PauseBox(); return null;
+                PrintBoxFooter(); PauseBox(); return (-1, username);
             }
 
             Console.Write("| Password: ");
             string password = ReadMaskedPassword();
             string hashedPassword = HashPassword(password);
 
-            if (foundUser.Password == hashedPassword)
+            if (Passwords[foundIdx] == hashedPassword)
             {
-                foundUser.FailedAttempts = 0; // Reset failed attempts on success
+                FailedAttempts[foundIdx] = 0; // Reset failed attempts on success
                 SaveUsers();
                 Console.WriteLine("\nLogin successful!");
-                PrintBoxFooter(); PauseBox(); return foundUser;
+                PrintBoxFooter(); PauseBox(); return (foundIdx, username);
             }
             else
             {
-                // "q" admin is never locked out, but others can be!
-                if (foundUser.Username == "q" && foundUser.Role == "Admin")
+   
+                if (Usernames[foundIdx] == "q" && Roles[foundIdx] == "Admin")
                 {
                     Console.WriteLine("\nInvalid password! Try again.");
-                    PrintBoxFooter(); PauseBox(); return null;
+                    PrintBoxFooter(); PauseBox(); return (-1, username);
                 }
 
-                foundUser.FailedAttempts++;
-                if (foundUser.FailedAttempts >= 3)
+                FailedAttempts[foundIdx]++;
+                if (FailedAttempts[foundIdx] >= 3)
                 {
-                    foundUser.IsLocked = true;
+                    IsLocked[foundIdx] = true;
                     SaveUsers();
                     PrintMessageBox("\nAccount locked after 3 failed attempts!", ConsoleColor.Red);
                 }
                 else
                 {
                     SaveUsers();
-                    PrintMessageBox($"\nInvalid password! Attempts left: {3 - foundUser.FailedAttempts}", ConsoleColor.Red);
+                    PrintMessageBox($"\nInvalid password! Attempts left: {3 - FailedAttempts[foundIdx]}", ConsoleColor.Red);
                 }
 
-                PrintBoxFooter(); PauseBox(); return null;
+                PrintBoxFooter(); PauseBox(); return (-1, username); // Always a tuple!
             }
         }
+
+
 
         /// <summary>
         /// Signup for specified role, requiring unique username and saving a hashed password.
@@ -827,7 +855,7 @@ namespace MiniBankSystemProject
                     continue;
                 }
                 // Check uniqueness
-                if (Users.Any(u => u.Username == username))
+                if (Usernames.Any(u => u == username))
                 {
                     PrintMessageBox("| Username already exists! Try another.", ConsoleColor.Yellow);
                     continue;
@@ -859,8 +887,6 @@ namespace MiniBankSystemProject
 
             string phone = ReadDigitsOnly("| Enter Phone Number: ");
 
-
-
             string address;
             while (true)
             {
@@ -885,12 +911,13 @@ namespace MiniBankSystemProject
             }
             PrintBoxFooter();
 
-            // Add user and pending account request
-            User uNew = new User();
-            uNew.Username = username;
-            uNew.Password = HashPassword(password);
-            uNew.Role = role;
-            Users.Add(uNew);
+            // Add user to parallel lists
+            Usernames.Add(username);
+            Passwords.Add(HashPassword(password));
+            Roles.Add(role);
+            IsLocked.Add(false);
+            FailedAttempts.Add(0);
+
             SaveUsers();
 
             if (role == "Admin")
@@ -910,35 +937,41 @@ namespace MiniBankSystemProject
         /// <summary>
         /// Customer login using only National ID. Validates that account exists.
         /// </summary>
-        public static User LoginByNationalID()
+        public static (int userIdx, string username) LoginByNationalID()
         {
             Console.Clear();
             PrintBoxHeader("LOGIN BY NATIONAL ID", "🔑");
             Console.Write("| Enter your National ID: ");
             string nationalID = Console.ReadLine();
             PrintBoxFooter();
-            int idx = nationalIDsL.IndexOf(nationalID);
-            if (idx == -1)
+
+            int accIdx = nationalIDsL.IndexOf(nationalID);
+            if (accIdx == -1)
             {
                 Console.WriteLine("No approved account with this National ID.");
                 PauseBox();
-                return null;
+                return (-1, nationalID); 
             }
-            string username = accountNamesL[idx];
-            User foundUser = null;
-            for (int i = 0; i < Users.Count; i++)
-                if (Users[i].Username == username && Users[i].Role == "Customer")
-                    foundUser = Users[i];
-            if (foundUser == null)
+            string username = accountNamesL[accIdx];
+
+            int foundIdx = -1;
+            for (int i = 0; i < Usernames.Count; i++)
+                if (Usernames[i] == username && Roles[i] == "Customer")
+                    foundIdx = i;
+
+            if (foundIdx == -1)
             {
                 Console.WriteLine("No login linked to this National ID.");
                 PauseBox();
-                return null;
+                return (-1, username); 
             }
+
             Console.WriteLine("Login successful! Welcome, " + username);
             PauseBox();
-            return foundUser;
+            return (foundIdx, username); 
         }
+
+
 
 
 
@@ -950,7 +983,7 @@ namespace MiniBankSystemProject
         /// <summary>
         /// Main admin dashboard with all admin functions.
         /// </summary>
-        public static void ShowAdminMenu(User currentUser)
+        public static void ShowAdminMenu(int userIdx)
         {
             while (true)
             {
@@ -959,7 +992,7 @@ namespace MiniBankSystemProject
                 Console.WriteLine("  ╔════════════════════════════════════════════════════╗");
                 Console.WriteLine("  ║         👑   ADMIN CONTROL CENTER   👑             ║");
                 Console.WriteLine("  ╠════════════════════════════════════════════════════╣");
-                Console.WriteLine("  ║  Welcome, " + currentUser.Username.PadRight(38) + "  ║");
+                Console.WriteLine("  ║  Welcome, " + Usernames[userIdx].PadRight(38) + "  ║");
                 Console.WriteLine("  ╠════════════════════════════════════════════════════╣");
 
                 // === SECTION: User Management ===
@@ -1383,11 +1416,11 @@ namespace MiniBankSystemProject
             string username = Console.ReadLine();
             bool found = false;
 
-            for (int i = 0; i < Users.Count; i++)
+            for (int i = 0; i < Usernames.Count; i++)
             {
-                if (Users[i].Username == username)
+                if (Usernames[i] == username)
                 {
-                    if (Users[i].IsLocked)
+                    if (IsLocked[i])
                     {
                         Console.WriteLine($"\nAre you sure you want to UNLOCK the account for '{username}'? (yes/no): ");
                         string confirm = Console.ReadLine().Trim().ToLower();
@@ -1397,9 +1430,9 @@ namespace MiniBankSystemProject
                             PauseBox();
                             return;
                         }
-                        
-                        Users[i].IsLocked = false;
-                        Users[i].FailedAttempts = 0;
+
+                        IsLocked[i] = false;
+                        FailedAttempts[i] = 0;
                         SaveUsers();
                         Console.WriteLine("| Account for '" + username + "' has been unlocked!");
                     }
@@ -1419,6 +1452,7 @@ namespace MiniBankSystemProject
             PauseBox();
         }
 
+
         /// <summary>
         /// Ensures there is always one Admin account in the system with username "q" and password "q".
         /// If the admin account does not exist, it will be created and saved automatically.
@@ -1427,20 +1461,21 @@ namespace MiniBankSystemProject
         public static void EnsureAdminAccount()
         {
             // Look for admin user "q"
-            foreach (var user in Users)
-                if (user.Username == "q" && user.Role == "Admin")
+            for (int i = 0; i < Usernames.Count; i++)
+            {
+                if (Usernames[i] == "q" && Roles[i] == "Admin")
                     return;
+            }
 
-            // Create the admin user q with password "q"
-            User admin = new User();
-            admin.Username = "q";
-            admin.Password = HashPassword("q");
-            admin.Role = "Admin";
-            admin.IsLocked = false;
-            admin.FailedAttempts = 0;
-            Users.Add(admin);
+            // Create the admin user "q" with password "q"
+            Usernames.Add("q");
+            Passwords.Add(HashPassword("q"));
+            Roles.Add("Admin");
+            IsLocked.Add(false);
+            FailedAttempts.Add(0);
             SaveUsers();
         }
+
 
         /// <summary>
         /// Deletes all persistent data files (accounts, users, reviews, transaction logs)
@@ -1474,20 +1509,38 @@ namespace MiniBankSystemProject
                     var files = Directory.GetFiles(TransactionsDir, "*.txt", SearchOption.TopDirectoryOnly);
                     foreach (var file in files)
                         File.Delete(file);
+
+                    Directory.Delete(TransactionsDir, true);
                 }
 
+                // Clear all in-memory data (parallel lists, queues, stacks, etc.)
+                Usernames.Clear();
+                Passwords.Clear();
+                Roles.Clear();
+                IsLocked.Clear();
+                FailedAttempts.Clear();
 
-                Directory.Delete(TransactionsDir, true);
-
-                // Clear all in-memory data
-                Users.Clear();
                 accountOpeningRequests.Clear();
                 accountNumbersL.Clear();
                 accountNamesL.Clear();
                 balancesL.Clear();
                 nationalIDsL.Clear();
+                phoneNumbersL.Clear();
+                addressesL.Clear();
+
                 ReviewsS.Clear();
+
                 lastAccountNumber = 1000;
+
+                // Clear all other collections as needed (add here)
+                LoanReq_Usernames.Clear();
+                LoanReq_Amounts.Clear();
+                LoanReq_Reasons.Clear();
+                LoanReq_Status.Clear();
+                LoanReq_InterestRates.Clear();
+                ServiceFeedbacks.Clear();
+                AppointmentRequests.Clear();
+                ApprovedAppointments.Clear();
 
                 Console.WriteLine("All data deleted successfully!");
             }
@@ -1499,6 +1552,7 @@ namespace MiniBankSystemProject
             PauseBox();
         }
 
+
         /// <summary>
         /// Lets the Admin process all pending loan requests one by one.
         /// Admin may Approve (add funds to customer account and mark as Approved) or Reject (mark as Rejected).
@@ -1507,50 +1561,48 @@ namespace MiniBankSystemProject
         public static void ProcessLoanRequests()
         {
             PrintBoxHeader("PROCESS LOAN REQUESTS", "💸");
-            if (LoanRequests.Count == 0)
+            if (LoanReq_Usernames.Count == 0)
             {
                 Console.WriteLine("No loan requests.");
                 PauseBox();
                 return;
             }
 
-            int requests = LoanRequests.Count;
+            int requests = LoanReq_Usernames.Count;
             for (int i = 0; i < requests; i++)
             {
-                var req = LoanRequests.Dequeue();
-                if (req.Status != "Pending") continue;  
-                Console.WriteLine($"User: {req.Username}, Amount: {req.Amount}, Reason: {req.Reason}");
+                if (LoanReq_Status[i] != "Pending") continue;
+
+                Console.WriteLine($"User: {LoanReq_Usernames[i]}, Amount: {LoanReq_Amounts[i]}, Reason: {LoanReq_Reasons[i]}");
                 Console.Write("Approve (A) / Reject (R): ");
                 char k = Console.ReadKey().KeyChar;
                 Console.WriteLine();
 
                 if (k == 'A' || k == 'a')
                 {
-                    int idx = accountNamesL.FindIndex(u => u == req.Username);
+                    int idx = accountNamesL.FindIndex(u => u == LoanReq_Usernames[i]);
                     if (idx >= 0)
                     {
-                        balancesL[idx] += req.Amount;
+                        balancesL[idx] += LoanReq_Amounts[i];
                         SaveAccountsInformationToFile();
-                        LogTransaction(idx, "Loan Approved", req.Amount, balancesL[idx]);
+                        LogTransaction(idx, "Loan Approved", LoanReq_Amounts[i], balancesL[idx]);
                         Console.WriteLine("Loan approved and amount added to user account.");
                     }
-                    req.Status = "Approved";
+                    LoanReq_Status[i] = "Approved";
                 }
                 else if (k == 'R' || k == 'r')
                 {
                     Console.WriteLine("Loan rejected.");
-                    req.Status = "Rejected";
+                    LoanReq_Status[i] = "Rejected";
                 }
                 else
                 {
                     Console.WriteLine("Invalid input. Skipping...");
                 }
-
-                // Re-enqueue to keep in the queue for customer to see status
-                LoanRequests.Enqueue(req);
             }
             PauseBox();
         }
+
 
         /// <summary>
         /// Allows the Admin to view a list of all loan requests submitted by customers.
@@ -1560,21 +1612,22 @@ namespace MiniBankSystemProject
         public static void ViewAllLoanRequests()
         {
             PrintBoxHeader("ALL LOAN REQUESTS", "💸");
-            if (LoanRequests.Count == 0)
+            if (LoanReq_Usernames.Count == 0)
             {
                 Console.WriteLine("|   No loan requests found.                          |");
             }
             else
             {
-                foreach (var req in LoanRequests)
+                for (int i = 0; i < LoanReq_Usernames.Count; i++)
                 {
-                    Console.WriteLine($"| User: {req.Username.PadRight(12)} | Amount: {req.Amount,8:F2} | Status: {req.Status.PadRight(9)} | Interest: {req.InterestRate * 100:F1}% | Reason: {req.Reason.PadRight(15)}|");
+                    Console.WriteLine($"| User: {LoanReq_Usernames[i].PadRight(12)} | Amount: {LoanReq_Amounts[i],8:F2} | Status: {LoanReq_Status[i].PadRight(9)} | Interest: {LoanReq_InterestRates[i] * 100:F1}% | Reason: {LoanReq_Reasons[i].PadRight(15)}|");
                 }
             }
 
             PrintBoxFooter();
             PauseBox();
         }
+
 
         /// <summary>
         /// Allows admin to filter any user's transactions by username and then by date, type, or amount.
@@ -1688,8 +1741,16 @@ namespace MiniBankSystemProject
         public static void ChangeAdminPassword()
         {
             PrintBoxHeader("CHANGE ADMIN PASSWORD", "🔑");
-            var admin = Users.FirstOrDefault(u => u.Username == "q" && u.Role == "Admin");
-            if (admin == null)
+            int adminIdx = -1;
+            for (int i = 0; i < Usernames.Count; i++)
+            {
+                if (Usernames[i] == "q" && Roles[i] == "Admin")
+                {
+                    adminIdx = i;
+                    break;
+                }
+            }
+            if (adminIdx == -1)
             {
                 Console.WriteLine("Admin account not found.");
                 PauseBox();
@@ -1697,7 +1758,7 @@ namespace MiniBankSystemProject
             }
             Console.Write("Enter current password: ");
             string oldPass = ReadMaskedPassword();
-            if (HashPassword(oldPass) != admin.Password)
+            if (HashPassword(oldPass) != Passwords[adminIdx])
             {
                 Console.WriteLine("Incorrect password.");
                 PauseBox();
@@ -1705,12 +1766,13 @@ namespace MiniBankSystemProject
             }
             Console.Write("Enter new password: ");
             string newPass = ReadMaskedPassword();
-            admin.Password = HashPassword(newPass);
+            Passwords[adminIdx] = HashPassword(newPass);
             SaveUsers();
             Console.WriteLine("Admin password updated!");
             PrintBoxFooter();
             PauseBox();
         }
+
 
         /// <summary>
         /// Lets the admin view all submitted service feedback.
@@ -1980,11 +2042,17 @@ namespace MiniBankSystemProject
         public static void ShowTotalCustomers()
         {
             PrintBoxHeader("TOTAL CUSTOMERS", "👥");
-            int count = Users.Count(u => u.Role == "Customer");
+            int count = 0;
+            for (int i = 0; i < Roles.Count; i++)
+            {
+                if (Roles[i] == "Customer")
+                    count++;
+            }
             Console.WriteLine($"|   Total customers: {count}".PadRight(48) + "|");
             PrintBoxFooter();
             PauseBox();
         }
+
 
         /// <summary>
         /// Admin: Shows overall statistics about the bank system.
@@ -1993,11 +2061,15 @@ namespace MiniBankSystemProject
         {
             Console.Clear();
             PrintBoxHeader("SYSTEM STATISTICS", "📊");
-            Console.WriteLine("| Total Registered Users:      " + Users.Count.ToString().PadRight(18) + "|");
+            Console.WriteLine("| Total Registered Users:      " + Usernames.Count.ToString().PadRight(18) + "|");
             Console.WriteLine("| Total Approved Accounts:     " + accountNumbersL.Count.ToString().PadRight(18) + "|");
-            Console.WriteLine("| Total Loans (all):           " + LoanRequests.Count.ToString().PadRight(18) + "|");
-            int approvedLoans = LoanRequests.Count(lr => lr.Status == "Approved");
+            Console.WriteLine("| Total Loans (all):           " + LoanReq_Usernames.Count.ToString().PadRight(18) + "|");
+
+            int approvedLoans = 0;
+            for (int i = 0; i < LoanReq_Status.Count; i++)
+                if (LoanReq_Status[i] == "Approved") approvedLoans++;
             Console.WriteLine("|  - Approved Loans:           " + approvedLoans.ToString().PadRight(18) + "|");
+
             Console.WriteLine("| Total Appointments:          " + (AppointmentRequests.Count + ApprovedAppointments.Count).ToString().PadRight(18) + "|");
             Console.WriteLine("|  - Approved Appointments:    " + ApprovedAppointments.Count.ToString().PadRight(18) + "|");
             Console.WriteLine("| Total Reviews:               " + ReviewsS.Count.ToString().PadRight(18) + "|");
@@ -2005,12 +2077,16 @@ namespace MiniBankSystemProject
 
             // Simple "profit" from loan interest
             double loanProfit = 0.0;
-            foreach (var lr in LoanRequests)
-                if (lr.Status == "Approved") loanProfit += lr.Amount * lr.InterestRate;
+            for (int i = 0; i < LoanReq_Usernames.Count; i++)
+            {
+                if (LoanReq_Status[i] == "Approved")
+                    loanProfit += LoanReq_Amounts[i] * LoanReq_InterestRates[i];
+            }
             Console.WriteLine("| Total Bank Loan Interest:    " + loanProfit.ToString("F2").PadRight(18) + "|");
             PrintBoxFooter();
             PauseBox();
         }
+
 
         /// <summary>
         /// Admin: View all users who are currently locked out.
@@ -2020,17 +2096,20 @@ namespace MiniBankSystemProject
             Console.Clear();
             PrintBoxHeader("LOCKED ACCOUNTS", "🔒");
             bool found = false;
-            foreach (var u in Users)
-                if (u.IsLocked)
+            for (int i = 0; i < Usernames.Count; i++)
+            {
+                if (IsLocked[i])
                 {
-                    Console.WriteLine($"| Username: {u.Username.PadRight(16)} | Role: {u.Role.PadRight(10)} |");
+                    Console.WriteLine($"| Username: {Usernames[i].PadRight(16)} | Role: {Roles[i].PadRight(10)} |");
                     found = true;
                 }
+            }
             if (!found)
                 Console.WriteLine("|   No locked accounts currently.                    |");
             PrintBoxFooter();
             PauseBox();
         }
+
 
 
 
@@ -2042,16 +2121,14 @@ namespace MiniBankSystemProject
         /// <summary>
         /// Main customer menu/dashboard. If account not approved, shows request status.
         /// </summary>
-        public static void ShowCustomerMenu(User currentUser)
+        public static void ShowCustomerMenu(int userIdx, string username)
         {
             while (true)
             {
-                int userIdx = GetAccountIndexForUser(currentUser);
-
-                // Pending account logic unchanged
+                // --- Pending account logic ---
                 if (userIdx == -1)
                 {
-                    string pendingReq = GetPendingRequestForUser(currentUser);
+                    string pendingReq = GetPendingRequestForUser(username);
                     if (pendingReq != null)
                     {
                         PrintBoxHeader("ACCOUNT REQUEST STATUS", "📝");
@@ -2062,18 +2139,19 @@ namespace MiniBankSystemProject
                     }
                     else
                     {
-                        RequestAccountOpening(currentUser);
+                        RequestAccountOpening(username);
                         return;
                     }
                 }
 
-                // Your styled customer dashboard
+                // ---- APPROVED ACCOUNT MENU ----
                 Console.Clear();
                 PrintBankLogo();
                 Console.WriteLine("  ╔════════════════════════════════════════════════════╗");
                 Console.WriteLine("  ║           💳   CUSTOMER DASHBOARD   💳            ║");
                 Console.WriteLine("  ╠════════════════════════════════════════════════════╣");
-                Console.WriteLine("  ║  Welcome, " + currentUser.Username.PadRight(38) + "║");
+                Console.WriteLine("  ║  Welcome, " + Usernames[userIdx].PadRight(38) + "║");
+
 
                 // === SECTION: Account Operations ===
                 Console.WriteLine("  ║═══════════════ [ Account Operations ] ═════════════║");
@@ -2144,16 +2222,16 @@ namespace MiniBankSystemProject
                     case "4": ShowTransactionHistory(userIdx); PauseBox(); break;
                     case "5": AccountDetails(userIdx); break;
                     case "6": TransferBetweenAccounts(); break;
-                    case "7": Reviews(); break;
-                    case "8": UndoLastComplaint(); break;
+                    case "7": Reviews(userIdx); break;
+                    case "8": UndoLastComplaint(userIdx); break;
                     case "9": PrintMonthlyStatement(userIdx); break;
-                    case "10": UpdateAccountInfo(currentUser); break;
-                    case "11": RequestLoan(currentUser); break;
-                    case "12": ViewMyLoanRequests(currentUser); break;
+                    case "10": UpdateAccountInfo(userIdx); break;
+                    case "11": RequestLoan(userIdx); break;
+                    case "12": ViewMyLoanRequests(userIdx); break;
                     case "13": FilterMyTransactions(userIdx); break;
-                    case "14": SubmitServiceFeedback(currentUser); break;
-                    case "15": BookAppointment(currentUser); break;
-                    case "16": ViewMyAppointments(currentUser); break;
+                    case "14": SubmitServiceFeedback(userIdx); break;
+                    case "15": BookAppointment(userIdx); break;
+                    case "16": ViewMyAppointments(userIdx); break;
                     case "17": ConvertMyBalance(userIdx); break;
                     case "0": return;
                     default: PrintMessageBox("Invalid choice! Please try again.", ConsoleColor.Red); break;
@@ -2161,10 +2239,11 @@ namespace MiniBankSystemProject
             }
         }
 
+
         /// <summary>
         /// Lets customer request to open a new account (goes to pending requests).
         /// </summary>
-        public static void RequestAccountOpening(User currentUser)
+        public static void RequestAccountOpening(string username)
         {
             Console.Clear();
             PrintBoxHeader("REQUEST ACCOUNT OPENING", "📝");
@@ -2179,11 +2258,12 @@ namespace MiniBankSystemProject
                 Console.WriteLine("National ID already exists or pending.");
                 PauseBox(); return;
             }
-            string request = "Username: " + currentUser.Username + " | Name: " + name + " | National ID: " + nationalID + " | Initial: " + initialDeposit;
+            string request = "Username: " + username + " | Name: " + name + " | National ID: " + nationalID + " | Initial: " + initialDeposit;
             accountOpeningRequests.Enqueue(request);
             Console.WriteLine("\nAccount request submitted!");
             PauseBox();
         }
+
 
         /// <summary>
         /// Deposit money for a customer account. Also prints a receipt.
@@ -2278,7 +2358,7 @@ namespace MiniBankSystemProject
         /// <summary>
         /// Lets a customer submit a new review or complaint (pushes onto stack).
         /// </summary>
-        public static void Reviews()
+        public static void Reviews(int userIdx)
         {
             Console.Clear();
             PrintBoxHeader("SUBMIT COMPLAINT/REVIEW", "✉️");
@@ -2294,7 +2374,7 @@ namespace MiniBankSystemProject
         /// <summary>
         /// Removes the most recent review/complaint submitted by any user.
         /// </summary>
-        public static void UndoLastComplaint()
+        public static void UndoLastComplaint(int userIdx)
         {
             if (ReviewsS.Count > 0)
             {
@@ -2420,9 +2500,10 @@ namespace MiniBankSystemProject
         /// after verifying their current password. Updates both the Users list and account data.
         /// Passwords are securely handled and hashed. Username and National ID must remain unique.
         /// </summary>
-        public static void UpdateAccountInfo(User currentUser)
+        public static void UpdateAccountInfo(int userIdx)
         {
-            int idx = GetAccountIndexForUser(currentUser);
+            // idx is the index in accounts lists (should match userIdx if 1-to-1, otherwise adjust mapping)
+            int idx = userIdx;
             if (idx == -1)
             {
                 Console.WriteLine("No approved account found.");
@@ -2445,7 +2526,7 @@ namespace MiniBankSystemProject
             // Require current password for changes
             Console.Write("Enter current password: ");
             string oldPass = ReadMaskedPassword();
-            if (HashPassword(oldPass) != currentUser.Password)
+            if (HashPassword(oldPass) != Passwords[userIdx])
             {
                 Console.WriteLine("Incorrect password.");
                 PauseBox();
@@ -2457,14 +2538,14 @@ namespace MiniBankSystemProject
                 Console.Write("Enter new username: ");
                 string newUser = Console.ReadLine();
                 // Check uniqueness
-                foreach (var u in Users)
-                    if (u.Username == newUser)
+                foreach (var u in Usernames)
+                    if (u == newUser)
                     {
                         Console.WriteLine("Username already taken.");
                         PauseBox();
                         return;
                     }
-                currentUser.Username = newUser;
+                Usernames[userIdx] = newUser;
                 accountNamesL[idx] = newUser;
                 Console.WriteLine("Username updated.");
             }
@@ -2472,13 +2553,12 @@ namespace MiniBankSystemProject
             {
                 Console.Write("Enter new password: ");
                 string newPass = ReadMaskedPassword();
-                currentUser.Password = HashPassword(newPass);
+                Passwords[userIdx] = HashPassword(newPass);
                 Console.WriteLine("Password updated.");
             }
             else if (choice == "3")
             {
                 string newNID = ReadDigitsOnly("Enter new National ID: ");
-
                 // Check uniqueness
                 if (nationalIDsL.Contains(newNID))
                 {
@@ -2492,7 +2572,6 @@ namespace MiniBankSystemProject
             else if (choice == "4")
             {
                 string newPhone = ReadDigitsOnly("Enter new phone number: ");
-
                 phoneNumbersL[idx] = newPhone;
                 Console.WriteLine("Phone number updated.");
             }
@@ -2503,7 +2582,6 @@ namespace MiniBankSystemProject
                 addressesL[idx] = newAddr;
                 Console.WriteLine("Address updated.");
             }
-
             else
             {
                 Console.WriteLine("Invalid choice.");
@@ -2516,14 +2594,15 @@ namespace MiniBankSystemProject
             PauseBox();
         }
 
+
         /// <summary>
         /// Allows a customer to submit a new loan request.
         /// The user enters the amount and reason; the request is added to the LoanRequests queue with "Pending" status.
         /// Loan requests are automatically saved to disk after submission.
         /// </summary>
-        public static void RequestLoan(User currentUser)
+        public static void RequestLoan(int userIdx)
         {
-            int idx = GetAccountIndexForUser(currentUser);
+            int idx = userIdx; // Assuming 1:1 mapping between users and accounts
             if (idx == -1)
             {
                 Console.WriteLine("You need an approved account first.");
@@ -2540,10 +2619,16 @@ namespace MiniBankSystemProject
             }
 
             // 2. Check if user has active (pending or approved) loan
-            bool hasActiveLoan = LoanRequests.Any(lr =>
-                lr.Username == currentUser.Username &&
-                (lr.Status == "Pending" || lr.Status == "Approved")
-            );
+            bool hasActiveLoan = false;
+            for (int i = 0; i < LoanReq_Usernames.Count; i++)
+            {
+                if (LoanReq_Usernames[i] == Usernames[userIdx] &&
+                    (LoanReq_Status[i] == "Pending" || LoanReq_Status[i] == "Approved"))
+                {
+                    hasActiveLoan = true;
+                    break;
+                }
+            }
             if (hasActiveLoan)
             {
                 Console.WriteLine("You already have a pending or active loan. Only one loan allowed at a time.");
@@ -2565,35 +2650,34 @@ namespace MiniBankSystemProject
 
             double interestRate = 0.05; // 5% interest rate (adjust as you like)
 
-            var req = new LoanRequest
-            {
-                Username = currentUser.Username,
-                Amount = amount,
-                Reason = reason,
-                Status = "Pending",
-                InterestRate = interestRate
-            };
+            // Add to parallel lists
+            LoanReq_Usernames.Add(Usernames[userIdx]);
+            LoanReq_Amounts.Add(amount);
+            LoanReq_Reasons.Add(reason);
+            LoanReq_Status.Add("Pending");
+            LoanReq_InterestRates.Add(interestRate);
 
-            LoanRequests.Enqueue(req);
             SaveLoanRequests(); // Always save after adding
             Console.WriteLine($"Loan request submitted for review (interest rate: {interestRate * 100:F1}%).");
             PauseBox();
         }
+
 
         /// <summary>
         /// Displays all loan requests submitted by the currently logged-in customer.
         /// Each request is shown with amount, reason, and status (Pending, Approved, Rejected).
         /// Lets users track their loan application status transparently.
         /// </summary>
-        public static void ViewMyLoanRequests(User currentUser)
+        public static void ViewMyLoanRequests(int userIdx)
         {
             PrintBoxHeader("MY LOAN REQUESTS", "💸");
             bool found = false;
-            foreach (var req in LoanRequests)
+            string username = Usernames[userIdx];
+            for (int i = 0; i < LoanReq_Usernames.Count; i++)
             {
-                if (req.Username == currentUser.Username)
+                if (LoanReq_Usernames[i] == username)
                 {
-                    Console.WriteLine($"| User: {req.Username.PadRight(12)} | Amount: {req.Amount,8:F2} | Status: {req.Status.PadRight(9)} | Interest: {req.InterestRate * 100:F1}% | Reason: {req.Reason.PadRight(15)}|");
+                    Console.WriteLine($"| User: {LoanReq_Usernames[i].PadRight(12)} | Amount: {LoanReq_Amounts[i],8:F2} | Status: {LoanReq_Status[i].PadRight(9)} | Interest: {LoanReq_InterestRates[i] * 100:F1}% | Reason: {LoanReq_Reasons[i].PadRight(15)}|");
                     found = true;
                 }
             }
@@ -2602,6 +2686,7 @@ namespace MiniBankSystemProject
             PrintBoxFooter();
             PauseBox();
         }
+
 
         /// <summary>
         /// Allows users to filter their own transaction history by date range, type, or amount.
@@ -2701,7 +2786,7 @@ namespace MiniBankSystemProject
         /// Lets a user submit feedback about a particular bank service (account opening, loans, etc.).
         /// The feedback is stored in ServiceFeedbacks and can be viewed by the admin.
         /// </summary>
-        public static void SubmitServiceFeedback(User currentUser)
+        public static void SubmitServiceFeedback(int userIdx)
         {
             Console.WriteLine("Select service to give feedback about:");
             Console.WriteLine("[1] Account Opening\n[2] Loans\n[3] Transfers\n[4] Other");
@@ -2717,19 +2802,19 @@ namespace MiniBankSystemProject
             Console.Write("Write your feedback: ");
             string text = Console.ReadLine();
 
-            string record = $"{currentUser.Username}|{service}|{text}|{DateTime.Now}";
+            string record = $"{Usernames[userIdx]}|{service}|{text}|{DateTime.Now}";
             ServiceFeedbacks.Add(record);
             SaveServiceFeedbacks();
             Console.WriteLine("Service feedback submitted!");
             Console.WriteLine("Thank you for helping us improve our services!");
             PauseBox();
-
         }
+
 
         /// <summary>
         /// Customer: Book an appointment for a bank service.
         /// </summary>
-        public static void BookAppointment(User currentUser)
+        public static void BookAppointment(int userIdx)
         {
             Console.Clear();
             PrintBoxHeader("BOOK APPOINTMENT", "📅");
@@ -2751,29 +2836,32 @@ namespace MiniBankSystemProject
             Console.Write("Reason (optional): ");
             string reason = Console.ReadLine();
 
-            string req = $"{currentUser.Username}|{service}|{date}|{time}|{reason}|Pending";
+            string req = $"{Usernames[userIdx]}|{service}|{date}|{time}|{reason}|Pending";
             AppointmentRequests.Enqueue(req);
             SaveAppointmentRequests();
             Console.WriteLine("Appointment request submitted! Wait for admin approval.");
             PauseBox();
         }
 
+
         /// <summary>
         /// Customer: View your own appointments (pending and approved).
         /// </summary>
-        public static void ViewMyAppointments(User currentUser)
+        public static void ViewMyAppointments(int userIdx)
         {
             PrintBoxHeader("MY APPOINTMENTS", "📅");
             bool found = false;
+            string username = Usernames[userIdx];
+
             foreach (var appt in AppointmentRequests)
-                if (appt.StartsWith(currentUser.Username + "|"))
+                if (appt.StartsWith(username + "|"))
                 {
                     var parts = appt.Split('|');
                     Console.WriteLine($"| Pending: {parts[1]} on {parts[2]} at {parts[3]} ({parts[4]})");
                     found = true;
                 }
             foreach (var appt in ApprovedAppointments)
-                if (appt.StartsWith(currentUser.Username + "|"))
+                if (appt.StartsWith(username + "|"))
                 {
                     var parts = appt.Split('|');
                     Console.WriteLine($"| Approved: {parts[1]} on {parts[2]} at {parts[3]} ({parts[4]})");
@@ -2784,6 +2872,7 @@ namespace MiniBankSystemProject
             PrintBoxFooter();
             PauseBox();
         }
+
 
         /// <summary>
         /// Customer: Convert your account balance to another currency.
