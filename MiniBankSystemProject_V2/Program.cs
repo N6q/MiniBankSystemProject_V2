@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Principal;
@@ -47,7 +47,6 @@ namespace MiniBankSystemProject
             Console.WriteLine();
             return pass;
         }
-        
 
         /// <summary>
         /// Hashes a password string using SHA256 for secure storage.
@@ -119,66 +118,138 @@ namespace MiniBankSystemProject
         //   Global Data Collections 
         // =============================
 
+        //         ========
+        //   USER & LOGIN INFORMATION
+        //         ========
 
+        /// <summary>List of all registered login usernames (both admins and customers).</summary>
+        public static List<string> Usernames = new List<string>();
 
-        public static List<string> Usernames = new List<string>(); 
+        /// <summary>List of hashed passwords for each username (index-aligned with Usernames).</summary>
         public static List<string> Passwords = new List<string>();
-        public static List<string> Roles = new List<string>();      // "Admin" or "Customer"
+
+        /// <summary>List of roles for each user: "Admin" or "Customer" (index-aligned with Usernames).</summary>
+        public static List<string> Roles = new List<string>();
+
+        /// <summary>List tracking whether each user account is locked (index-aligned with Usernames).</summary>
         public static List<bool> IsLocked = new List<bool>();
+
+        /// <summary>Number of consecutive failed login attempts for each user (index-aligned with Usernames).</summary>
         public static List<int> FailedAttempts = new List<int>();
 
-        // Stores all pending account creation requests (as queue, so admin approves in order)
+        //         ========
+        //   ACCOUNT CREATION & DATA
+        //         ========
+
+        /// <summary>
+        /// Queue of all pending account creation requests (string-formatted, to be processed by admin).
+        /// For customer accounts only.
+        /// </summary>
         public static Queue<string> accountOpeningRequests = new Queue<string>();
-        // Stores all approved account numbers (unique int per account)
+
+        /// <summary>List of all approved account numbers (unique int per bank account).</summary>
         public static List<int> accountNumbersL = new List<int>();
-        // Stores the login username that owns each account (parallel to accountNumbersL)
+
+        /// <summary>
+        /// List of usernames who own each bank account (index-aligned with accountNumbersL).
+        /// </summary>
         public static List<string> accountNamesL = new List<string>();
-        // Stores the balance of each account (parallel to accountNumbersL)
+
+        /// <summary>List of balances for each account (index-aligned with accountNumbersL).</summary>
         public static List<double> balancesL = new List<double>();
-        // Stores the National ID linked to each account (parallel to accountNumbersL)
+
+        /// <summary>List of National IDs for each account (index-aligned with accountNumbersL).</summary>
         public static List<string> nationalIDsL = new List<string>();
-        // Stores all phone numbers registered in the system
+
+        /// <summary>List of phone numbers for each account (index-aligned with accountNumbersL).</summary>
         public static List<string> phoneNumbersL = new List<string>();
-        // Stores all addresses registered in the system
+
+        /// <summary>List of addresses for each account (index-aligned with accountNumbersL).</summary>
         public static List<string> addressesL = new List<string>();
-        // Stores complaints/reviews as a stack (user can "undo" the last one)
+        
+        //         ========
+        //   COMPLAINTS & REVIEWS
+        //         ========
+
+        /// <summary>Stack of all complaints/reviews (global, not per-user in this version; use per-user stacks for advanced).</summary>
         public static Stack<string> ReviewsS = new Stack<string>();
-        // Last issued account number (for generating new unique numbers)
-        static int lastAccountNumber = 1000;
-
-
         
-        
+        //         ========
+        //   ACCOUNT NUMBER GENERATION
+        //         ========
+
+        /// <summary>Last issued account number (increment to generate new unique numbers).</summary>
+        public static int lastAccountNumber = 1000;
+
+        //         ========
+        //   LOAN REQUESTS 
+        //         ========
+
+        /// <summary>Usernames for each loan request.</summary>
         public static List<string> LoanReq_Usernames = new List<string>();
+        /// <summary>Requested loan amount for each loan request.</summary>
         public static List<double> LoanReq_Amounts = new List<double>();
+        /// <summary>Reason for each loan request.</summary>
         public static List<string> LoanReq_Reasons = new List<string>();
+        /// <summary>Status of each loan request: "Pending", "Approved", or "Rejected".</summary>
         public static List<string> LoanReq_Status = new List<string>();
+        /// <summary>Interest rate for each loan request (as a decimal, e.g. 0.05 for 5%).</summary>
         public static List<double> LoanReq_InterestRates = new List<double>();
 
-        // Stores all ServiceFeedbacks 
+        //         ========
+        //   FEEDBACK & APPOINTMENTS
+        //         ========
+        /// <summary>List of all service feedbacks (string format: username, service, feedback, timestamp).</summary>
         public static List<string> ServiceFeedbacks = new List<string>();
 
-        // Appointment requests and approvals 
+        /// <summary>Queue of all pending appointment requests (string-formatted).</summary>
         public static Queue<string> AppointmentRequests = new Queue<string>();
+        /// <summary>List of all approved appointment requests (string-formatted).</summary>
         public static List<string> ApprovedAppointments = new List<string>();
 
+        //         ========  
+        //   ADMIN ACCOUNT REQUESTS
+        //         ========
+
+        /// <summary>Queue of all pending admin account signup requests (string-formatted, admin only).</summary>
+        public static Queue<string> adminAccountRequests = new Queue<string>();
+
 
 
 
         // =============================
-        //         File storage 
+        //         FILE STORAGE 
         // =============================
-        const double MinimumBalance = 50.0;          // Minimum allowed balance in any account
-        static string AccountsFilePath = "accounts.txt";   // File for saving/loading accounts
-        static string UsersFilePath = "users.txt";         // File for saving/loading users
-        static string ReviewsFilePath = "reviews.txt";     // File for saving/loading reviews
-        static string TransactionsDir = "transactions";    // Folder for transaction logs/receipts
-        static string LoanRequestsFilePath = "loan_requests.txt"; // File for saving/loading loan requests
-        static string ServiceFeedbackFile = "service_feedback.txt"; // File for saving service feedbacks
+
+        /// <summary>Minimum allowed balance in any bank account.</summary>
+        const double MinimumBalance = 50.0;
+
+        /// <summary>File path for saving and loading all approved bank accounts.</summary>
+        static string AccountsFilePath = "accounts.txt";
+
+        /// <summary>File path for saving and loading all registered user login info.</summary>
+        static string UsersFilePath = "users.txt";
+
+        /// <summary>File path for saving and loading all submitted complaints/reviews.</summary>
+        static string ReviewsFilePath = "reviews.txt";
+
+        /// <summary>Directory path for all account transaction logs and receipts.</summary>
+        static string TransactionsDir = "transactions";
+
+        /// <summary>File path for saving and loading all loan requests.</summary>
+        static string LoanRequestsFilePath = "loan_requests.txt";
+
+        /// <summary>File path for saving and loading all service feedback submissions.</summary>
+        static string ServiceFeedbackFile = "service_feedback.txt";
+
+        /// <summary>File path for saving and loading all pending appointment requests.</summary>
         static string AppointmentRequestsFile = "appointments_pending.txt";
-        static string ApprovedAppointmentsFile = "appointments_approved.txt";
-        static string ExchangeRatesFile = "exchange_rates.txt";
 
+        /// <summary>File path for saving and loading all approved appointment records.</summary>
+        static string ApprovedAppointmentsFile = "appointments_approved.txt";
+
+        /// <summary>File path for saving and loading currency exchange rates used in the system.</summary>
+        static string ExchangeRatesFile = "exchange_rates.txt";
 
 
         // =============================
@@ -187,6 +258,7 @@ namespace MiniBankSystemProject
 
         /// <summary>
         /// Prints the fancy ASCII logo/banner for the bank system at the top of every menu.
+        /// Visually brands the system and gives a luxury/trusted feel.
         /// </summary>
         static void PrintBankLogo()
         {
@@ -215,25 +287,29 @@ namespace MiniBankSystemProject
         }
 
         /// <summary>
-        /// Prints a header box for any dialog or sub-menu .
+        /// Prints a standard header box for any dialog, menu, or popup.
+        /// Includes an optional icon for context.
         /// </summary>
+        /// <param name="title">The title or label for the box.</param>
+        /// <param name="icon">The emoji/icon to display in the header (default: money bag).</param>
         static void PrintBoxHeader(string title, string icon = "💰")
         {
             Console.WriteLine("╔════════════════════════════════════════════════════════╗");
             Console.WriteLine("║            " + icon + "  " + title.PadRight(40) + "║");
             Console.WriteLine("╠════════════════════════════════════════════════════════╣");
         }
-        
+
         /// <summary>
-        /// Prints the footer/closing line for dialog/sub-menu boxes.
+        /// Prints the footer/closing line for dialog or sub-menu boxes to complete the visual frame.
         /// </summary>
         static void PrintBoxFooter()
         {
             Console.WriteLine("╚════════════════════════════════════════════════════════╝");
         }
-        
+
         /// <summary>
-        /// Pauses the program and prompts the user to press enter to continue.
+        /// Pauses the program, prompting the user to press Enter to continue.
+        /// Used after important messages or actions.
         /// </summary>
         static void PauseBox()
         {
@@ -243,6 +319,12 @@ namespace MiniBankSystemProject
             Console.ReadLine();
         }
 
+        /// <summary>
+        /// Displays a colored message box with a framed border.
+        /// Pauses after the message so the user has time to read it.
+        /// </summary>
+        /// <param name="message">The message to display inside the box.</param>
+        /// <param name="color">The color for the message text (default: white).</param>
         public static void PrintMessageBox(string message, ConsoleColor color = ConsoleColor.White)
         {
             Console.ForegroundColor = color;
@@ -252,6 +334,7 @@ namespace MiniBankSystemProject
             Console.ResetColor();
             PauseBox();
         }
+
 
         // =============================
         //      FILE MANAGEMENT
@@ -264,7 +347,7 @@ namespace MiniBankSystemProject
         {
             StreamWriter writer = new StreamWriter(AccountsFilePath);
             for (int i = 0; i < accountNumbersL.Count; i++)
-                writer.WriteLine(accountNumbersL[i] + "," + accountNamesL[i] + "," + balancesL[i] + "," + nationalIDsL[i]+ "," + phoneNumbersL[i] + "," + addressesL[i]);
+                writer.WriteLine(accountNumbersL[i] + "," + accountNamesL[i] + "," + balancesL[i] + "," + nationalIDsL[i] + "," + phoneNumbersL[i] + "," + addressesL[i]);
 
             writer.Close();
         }
@@ -331,7 +414,6 @@ namespace MiniBankSystemProject
                 }
             }
         }
-
 
         /// <summary>
         /// Saves all complaints/reviews (stack) to disk.
@@ -446,7 +528,6 @@ namespace MiniBankSystemProject
                 }
             }
         }
-
 
         /// <summary>
         /// Saves all service feedbacks to a text file ("service_feedback.txt") for persistence.
@@ -571,7 +652,6 @@ namespace MiniBankSystemProject
             return null;
         }
 
-
         /// <summary>
         /// Reads user input with a timeout (auto-logout if time expires).
         /// Returns null if timed out.
@@ -594,8 +674,20 @@ namespace MiniBankSystemProject
             return null;
         }
 
-
-
+        /// <summary>
+        /// Extracts a specific field's value from a request string (e.g., "Username").
+        /// </summary>
+        public static string ParseFieldFromRequest(string req, string field)
+        {
+            var parts = req.Split('|');
+            foreach (var part in parts)
+            {
+                var trimmed = part.Trim();
+                if (trimmed.StartsWith(field + ":"))
+                    return trimmed.Substring(field.Length + 1).Trim();
+            }
+            return "";
+        }
 
 
         // =============================
@@ -613,7 +705,7 @@ namespace MiniBankSystemProject
         }
 
         /// <summary>
-        /// Loads persistent data and starts the main menu loop.
+        /// Loads all persistent data from files and starts the main welcome menu.
         /// </summary>
         public static void StartSystem()
         {
@@ -629,7 +721,8 @@ namespace MiniBankSystemProject
         }
 
         /// <summary>
-        /// Shows the main "welcome" menu to choose between admin, customer, or exit.
+        /// Shows the main welcome menu for users to choose admin, customer, info, or exit.
+        /// Handles navigation to role menus and key utilities.
         /// </summary>
         public static void DisplayWelcomeMessage()
         {
@@ -654,7 +747,6 @@ namespace MiniBankSystemProject
                     // Login by National ID only (returns user index, or -1)
                     var (userIdx, username) = LoginByNationalID();
                     if (userIdx != -1) ShowCustomerMenu(userIdx, username);
-
                 }
                 else if (input == "4") ShowBankAbout();
                 else if (input == "5") ToggleTheme();
@@ -663,10 +755,10 @@ namespace MiniBankSystemProject
             }
         }
 
-
         /// <summary>
-        /// Shows login/signup for Admin or Customer role.
+        /// Shows login/signup options for Admin or Customer roles, and launches the right menu.
         /// </summary>
+        /// <param name="role">"Admin" or "Customer" for which menu to show.</param>
         public static void ShowRoleAuthMenu(string role)
         {
             while (true)
@@ -695,14 +787,18 @@ namespace MiniBankSystemProject
             }
         }
 
+        /// <summary>
+        /// Helper to return to the main welcome menu from anywhere in the program.
+        /// </summary>
+        public static void goBack()
+        {
+            Console.Clear();
+            DisplayWelcomeMessage();
+        }
 
         /// <summary>
-        /// Helper to return to the main welcome menu.
-        /// </summary>
-        public static void goBack() { Console.Clear(); DisplayWelcomeMessage(); }
-       
-        /// <summary>
-        /// Saves all data and cleanly exits the program.
+        /// Saves all persistent data and cleanly exits the banking application.
+        /// Displays a thank-you message before exiting.
         /// </summary>
         public static void ExitApplication()
         {
@@ -720,6 +816,9 @@ namespace MiniBankSystemProject
             Environment.Exit(0);
         }
 
+        /// <summary>
+        /// Displays the about/info box for the bank, including developer, contact, and version info.
+        /// </summary>
         public static void ShowBankAbout()
         {
             Console.Clear();
@@ -735,6 +834,9 @@ namespace MiniBankSystemProject
             PauseBox();
         }
 
+        /// <summary>
+        /// Toggles the console theme between light and dark modes for better user experience.
+        /// </summary>
         public static void ToggleTheme()
         {
             if (Console.BackgroundColor == ConsoleColor.Black)
@@ -749,9 +851,10 @@ namespace MiniBankSystemProject
             }
             Console.Clear();
             PrintBankLogo();
-            Console.WriteLine("Theme changed! (Demo: Console only)");
+            Console.WriteLine("Theme changed!");
             PauseBox();
         }
+
 
 
         // =============================
@@ -800,7 +903,7 @@ namespace MiniBankSystemProject
             }
             else
             {
-   
+
                 if (Usernames[foundIdx] == "q" && Roles[foundIdx] == "Admin")
                 {
                     Console.WriteLine("\nInvalid password! Try again.");
@@ -823,8 +926,6 @@ namespace MiniBankSystemProject
                 PrintBoxFooter(); PauseBox(); return (-1, username); // Always a tuple!
             }
         }
-
-
 
         /// <summary>
         /// Signup for specified role, requiring unique username and saving a hashed password.
@@ -911,23 +1012,19 @@ namespace MiniBankSystemProject
             }
             PrintBoxFooter();
 
-            // Add user to parallel lists
-            Usernames.Add(username);
-            Passwords.Add(HashPassword(password));
-            Roles.Add(role);
-            IsLocked.Add(false);
-            FailedAttempts.Add(0);
-
-            SaveUsers();
-
             if (role == "Admin")
             {
-                Console.WriteLine($"\nAdmin phone: {phone}, Address: {address}");
+                // Add admin request to queue (pending approval)
+                string request = "Username: " + username + " | Name: " + name
+                    + " | National ID: " + nationalID + " | Phone: " + phone
+                    + " | Address: " + address + " | Role: Admin";
+                adminAccountRequests.Enqueue(request);
+                Console.WriteLine("\nAdmin account request submitted for approval!");
             }
             else // Customer
             {
                 string request = "Username: " + username + " | Name: " + name + " | National ID: " + nationalID
-                    + " | Initial: " + initialDeposit + " | Phone: " + phone + " | Address: " + address;
+                    + " | Initial: " + initialDeposit + " | Phone: " + phone + " | Address: " + address + " | Role: Customer";
                 accountOpeningRequests.Enqueue(request);
                 Console.WriteLine("\nAccount request submitted!");
             }
@@ -950,7 +1047,7 @@ namespace MiniBankSystemProject
             {
                 Console.WriteLine("No approved account with this National ID.");
                 PauseBox();
-                return (-1, nationalID); 
+                return (-1, nationalID);
             }
             string username = accountNamesL[accIdx];
 
@@ -963,16 +1060,13 @@ namespace MiniBankSystemProject
             {
                 Console.WriteLine("No login linked to this National ID.");
                 PauseBox();
-                return (-1, username); 
+                return (-1, username);
             }
 
             Console.WriteLine("Login successful! Welcome, " + username);
             PauseBox();
-            return (foundIdx, username); 
+            return (foundIdx, username);
         }
-
-
-
 
 
 
@@ -998,6 +1092,8 @@ namespace MiniBankSystemProject
                 // === SECTION: User Management ===
                 Console.WriteLine("  ║═══════════════ [ User Management ] ════════════════║");
                 Console.WriteLine("  ║                                                    ║");
+                Console.WriteLine("  ║ [A1]  View Admin Requests                          ║");
+                Console.WriteLine("  ║ [A2]  Process Admin Requests                       ║");
                 Console.WriteLine("  ║ [1]  View Account Requests                         ║");
                 Console.WriteLine("  ║ [2]  Process Account Requests                      ║");
                 Console.WriteLine("  ║ [3]  View All Accounts                             ║");
@@ -1079,6 +1175,8 @@ namespace MiniBankSystemProject
                 switch (ch)
                 {
                     // User Management
+                    case "A1":ViewAdminRequests(); break;
+                    case "A2":ProcessAdminRequests(); break;
                     case "1": ViewRequests(); break;
                     case "2": ProcessRequest(); break;
                     case "3": ViewAccounts(); break;
@@ -1452,7 +1550,6 @@ namespace MiniBankSystemProject
             PauseBox();
         }
 
-
         /// <summary>
         /// Ensures there is always one Admin account in the system with username "q" and password "q".
         /// If the admin account does not exist, it will be created and saved automatically.
@@ -1475,7 +1572,6 @@ namespace MiniBankSystemProject
             FailedAttempts.Add(0);
             SaveUsers();
         }
-
 
         /// <summary>
         /// Deletes all persistent data files (accounts, users, reviews, transaction logs)
@@ -1552,7 +1648,6 @@ namespace MiniBankSystemProject
             PauseBox();
         }
 
-
         /// <summary>
         /// Lets the Admin process all pending loan requests one by one.
         /// Admin may Approve (add funds to customer account and mark as Approved) or Reject (mark as Rejected).
@@ -1603,7 +1698,6 @@ namespace MiniBankSystemProject
             PauseBox();
         }
 
-
         /// <summary>
         /// Allows the Admin to view a list of all loan requests submitted by customers.
         /// Shows username, amount, reason, and current status (Pending, Approved, Rejected) for each request.
@@ -1627,7 +1721,6 @@ namespace MiniBankSystemProject
             PrintBoxFooter();
             PauseBox();
         }
-
 
         /// <summary>
         /// Allows admin to filter any user's transactions by username and then by date, type, or amount.
@@ -1772,7 +1865,6 @@ namespace MiniBankSystemProject
             PrintBoxFooter();
             PauseBox();
         }
-
 
         /// <summary>
         /// Lets the admin view all submitted service feedback.
@@ -1961,7 +2053,7 @@ namespace MiniBankSystemProject
             Console.WriteLine("Total USD: {0:F2}", totalOMR * Rate_USD);
             Console.WriteLine("Total EUR: {0:F2}", totalOMR * Rate_EUR);
             Console.WriteLine("Total SAR: {0:F2}", totalOMR * Rate_SAR);
-            SaveExchangeRates(); 
+            SaveExchangeRates();
             PrintBoxFooter();
             PauseBox();
         }
@@ -2053,7 +2145,6 @@ namespace MiniBankSystemProject
             PauseBox();
         }
 
-
         /// <summary>
         /// Admin: Shows overall statistics about the bank system.
         /// </summary>
@@ -2087,7 +2178,6 @@ namespace MiniBankSystemProject
             PauseBox();
         }
 
-
         /// <summary>
         /// Admin: View all users who are currently locked out.
         /// </summary>
@@ -2109,6 +2199,90 @@ namespace MiniBankSystemProject
             PrintBoxFooter();
             PauseBox();
         }
+
+        /// <summary>
+        /// Displays all pending admin account requests (Role: Admin) for the bank system.
+        /// </summary>
+        public static void ViewAdminRequests()
+        {
+            Console.Clear();
+            PrintBoxHeader("PENDING ADMIN ACCOUNT REQUESTS", "👑");
+            bool found = false;
+            foreach (var req in adminAccountRequests)
+            {
+                if (req.Contains("Role: Admin"))
+                {
+                    Console.WriteLine("|   " + req.PadRight(48) + "|");
+                    found = true;
+                }
+            }
+            if (!found)
+                Console.WriteLine("|   No pending admin requests.                        |");
+            PrintBoxFooter();
+            PauseBox();
+        }
+
+        /// <summary>
+        /// Allows admin to process (approve/reject) pending admin account requests.
+        /// If approved, adds new admin to Users list with default password "admin123".
+        /// </summary>
+        public static void ProcessAdminRequests()
+        {
+            var requests = adminAccountRequests.ToList();
+            bool any = false;
+            for (int i = 0; i < requests.Count; i++)
+            {
+                var req = requests[i];
+                if (req.Contains("Role: Admin"))
+                {
+                    Console.Clear();
+                    PrintBoxHeader("ADMIN ACCOUNT REQUEST", "👑");
+                    Console.WriteLine("|   " + req.PadRight(48) + "|");
+                    PrintBoxFooter();
+                    Console.Write("Approve (A) / Reject (R): ");
+                    string action = Console.ReadLine().Trim().ToUpper();
+
+                    // Parse fields
+                    string username = ParseFieldFromRequest(req, "Username");
+                    string nationalID = ParseFieldFromRequest(req, "National ID");
+                    string phone = ParseFieldFromRequest(req, "Phone");
+                    string address = ParseFieldFromRequest(req, "Address");
+                    // Default password for admin, or you can prompt
+                    string password = HashPassword("admin123");
+
+                    if (action == "A")
+                    {
+                        Usernames.Add(username);
+                        Passwords.Add(password);
+                        Roles.Add("Admin");
+                        IsLocked.Add(false);
+                        FailedAttempts.Add(0);
+                        requests[i] = null; 
+                        Console.WriteLine($"Admin '{username}' approved. Default password: admin123");
+                        any = true;
+                    }
+                    else if (action == "R")
+                    {
+                        requests[i] = null; 
+                        Console.WriteLine("Admin request rejected.");
+                        any = true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid input. Skipping...");
+                    }
+                    PauseBox();
+                }
+            }
+            // Remove processed (null) requests from queue
+            accountOpeningRequests = new Queue<string>(requests.Where(r => r != null));
+            if (!any)
+            {
+                Console.WriteLine("No pending admin requests to process.");
+                PauseBox();
+            }
+        }
+
 
 
 
@@ -2239,7 +2413,6 @@ namespace MiniBankSystemProject
             }
         }
 
-
         /// <summary>
         /// Lets customer request to open a new account (goes to pending requests).
         /// </summary>
@@ -2263,7 +2436,6 @@ namespace MiniBankSystemProject
             Console.WriteLine("\nAccount request submitted!");
             PauseBox();
         }
-
 
         /// <summary>
         /// Deposit money for a customer account. Also prints a receipt.
@@ -2594,7 +2766,6 @@ namespace MiniBankSystemProject
             PauseBox();
         }
 
-
         /// <summary>
         /// Allows a customer to submit a new loan request.
         /// The user enters the amount and reason; the request is added to the LoanRequests queue with "Pending" status.
@@ -2662,7 +2833,6 @@ namespace MiniBankSystemProject
             PauseBox();
         }
 
-
         /// <summary>
         /// Displays all loan requests submitted by the currently logged-in customer.
         /// Each request is shown with amount, reason, and status (Pending, Approved, Rejected).
@@ -2686,7 +2856,6 @@ namespace MiniBankSystemProject
             PrintBoxFooter();
             PauseBox();
         }
-
 
         /// <summary>
         /// Allows users to filter their own transaction history by date range, type, or amount.
@@ -2810,7 +2979,6 @@ namespace MiniBankSystemProject
             PauseBox();
         }
 
-
         /// <summary>
         /// Customer: Book an appointment for a bank service.
         /// </summary>
@@ -2843,7 +3011,6 @@ namespace MiniBankSystemProject
             PauseBox();
         }
 
-
         /// <summary>
         /// Customer: View your own appointments (pending and approved).
         /// </summary>
@@ -2873,7 +3040,6 @@ namespace MiniBankSystemProject
             PauseBox();
         }
 
-
         /// <summary>
         /// Customer: Convert your account balance to another currency.
         /// </summary>
@@ -2896,6 +3062,7 @@ namespace MiniBankSystemProject
             PrintBoxFooter();
             PauseBox();
         }
+
 
 
     }
